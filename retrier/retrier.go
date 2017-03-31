@@ -23,17 +23,13 @@ func (r *Retrier) Run(work func() error) error {
 	retries := 0
 
 	for {
-		err := work()
-		ret := r.classifier.Classify(err)
-
-		switch ret {
-		case Succeed:
-			return nil
-		case Fail:
-			return err
+		ret := work()
+		switch r.classifier.Classify(ret) {
+		case Succeed, Fail:
+			return ret
 		case Retry:
 			if retries >= len(r.backoff) {
-				return err
+				return ret
 			}
 			time.Sleep(r.backoff[retries])
 			retries++
